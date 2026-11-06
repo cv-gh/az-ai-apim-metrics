@@ -1,0 +1,581 @@
+<!doctype html>
+<!--
+THESIS: Turn each dashboard panel into a checked alert plan, not a second dashboard.
+OWN-WORLD: Use the supplied Azure visual language: white surfaces, cool gray rules,
+blue controls, system type, and plain data tables.
+STORY: Check the source, set the condition, then follow the portal steps.
+FIRST VIEWPORT: A compact header and scope fields sit above a panel index and rule editor.
+FORM: Use an indexed field guide. Keep warnings beside the metric they affect.
+-->
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light">
+  <title>Dashboard alert guide</title>
+  <style>
+    :root { --ink:#192b3c; --muted:#526474; --blue:#075cb0; --line:#d5dfe8; --paper:#fff; --ground:#f3f6f9; --tint:#eaf3fc; --amber:#744500; --amber-bg:#fff6e5; }
+    * { box-sizing:border-box; }
+    body { margin:0; background:var(--ground); color:var(--ink); font:15px/1.6 "Segoe UI",Arial,sans-serif; }
+    button,input,select { font:inherit; }
+    button,a,input,select,summary { -webkit-tap-highlight-color:transparent; }
+    button { cursor:pointer; }
+    button:disabled { cursor:not-allowed; opacity:.65; }
+    :focus-visible { outline:3px solid #0b69c7; outline-offset:3px; }
+    a { color:var(--blue); text-underline-offset:3px; }
+    .skip { position:absolute; top:-80px; left:16px; padding:10px; background:white; z-index:10; }
+    .skip:focus { top:10px; }
+    header { background:var(--paper); border-bottom:1px solid var(--line); }
+    .topbar,.page { max-width:1420px; margin:auto; padding:24px 36px; }
+    .topbar { display:flex; align-items:center; justify-content:space-between; gap:24px; }
+    .identity { display:flex; align-items:center; gap:12px; font-size:17px; font-weight:650; }
+    .mark { width:27px; height:27px; display:grid; grid-template-columns:repeat(2,1fr); gap:3px; }
+    .mark i { background:var(--blue); }
+    .topnote { color:var(--muted); font-size:13px; }
+    h1 { margin:10px 0 8px; font-size:clamp(28px,3vw,40px); line-height:1.2; letter-spacing:-.025em; font-weight:650; }
+    h2 { font-size:23px; line-height:1.3; margin:0 0 12px; font-weight:650; }
+    h3 { font-size:17px; line-height:1.4; margin:28px 0 12px; font-weight:650; }
+    p { margin:0 0 14px; max-width:75ch; }
+    .intro { display:flex; justify-content:space-between; align-items:end; gap:24px; margin:10px 0 24px; }
+    .intro p { color:var(--muted); margin:0; }
+    .actions { display:flex; gap:8px; flex-wrap:wrap; flex-shrink:0; }
+    .button { padding:9px 16px; border:1px solid var(--line); background:white; border-radius:4px; color:var(--ink); font-weight:600; }
+    .button:hover { background:#e9eff5; border-color:#879bab; }
+    .primary { color:white; background:var(--blue); border-color:var(--blue); }
+    .primary:hover { color:white; background:#06477f; border-color:#06477f; }
+    .notice { padding:14px 18px; border:1px solid #e8cf9f; background:var(--amber-bg); color:var(--amber); border-radius:4px; }
+    .notice p:last-child { margin-bottom:0; }
+    .notice summary { cursor:pointer; font-weight:650; }
+    .notice ul { padding-left:22px; margin:10px 0 0; }
+    .scope { margin:22px 0; background:white; border:1px solid var(--line); padding:20px 24px; border-radius:5px; }
+    .sectionline { display:flex; align-items:baseline; gap:12px; flex-wrap:wrap; margin-bottom:14px; }
+    .sectionline h2 { font-size:18px; margin:0; }
+    .hint,.small { font-size:13px; color:var(--muted); }
+    .scope-grid { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:16px; }
+    label { display:block; font-size:13px; font-weight:600; margin-bottom:6px; }
+    input:not([type=checkbox]),select { width:100%; min-height:42px; border:1px solid #8e9fac; background:white; padding:8px 10px; border-radius:3px; color:var(--ink); }
+    input::placeholder { color:#5c6e7c; }
+    input[aria-invalid=true] { border:2px solid #b12828; }
+    .statusbar { min-height:27px; display:flex; flex-wrap:wrap; gap:8px 20px; justify-content:space-between; font-size:13px; color:var(--muted); margin-top:12px; }
+    .linkbutton { padding:0; border:0; background:transparent; color:var(--blue); text-decoration:underline; text-underline-offset:3px; }
+    .error { color:#a51d24; font-weight:600; }
+    .workspace { display:grid; grid-template-columns:276px minmax(0,1fr); align-items:start; gap:24px; }
+    nav { padding-top:6px; }
+    .navhead { display:flex; justify-content:space-between; align-items:center; padding:0 10px 10px; font-size:14px; font-weight:650; }
+    .count { color:var(--muted); font-weight:400; font-size:12px; }
+    .group { color:var(--muted); margin:18px 10px 6px; font-size:12px; font-weight:650; text-transform:uppercase; letter-spacing:.06em; }
+    .navbutton { display:flex; gap:12px; align-items:start; width:100%; text-align:left; border:1px solid transparent; background:transparent; padding:11px 10px; border-radius:4px; color:var(--ink); line-height:1.35; }
+    .navbutton:hover { background:#e6edf4; }
+    .navbutton[aria-current=true] { background:var(--tint); border-color:#a6c8e8; color:#064e95; font-weight:650; }
+    .navnumber { font-size:12px; min-width:17px; padding-top:2px; color:var(--muted); }
+    .navtext { flex:1; }
+    .navdone { color:#236342; font-size:12px; }
+    .navfoot { margin:22px 10px; padding-top:16px; border-top:1px solid var(--line); font-size:12px; color:var(--muted); }
+    article { background:white; border:1px solid var(--line); border-radius:5px; min-width:0; }
+    .article-head { padding:24px 28px 20px; border-bottom:1px solid var(--line); }
+    .article-meta { display:flex; align-items:center; gap:12px; flex-wrap:wrap; margin-bottom:10px; font-size:12px; color:var(--muted); }
+    .tag { background:var(--tint); color:#075398; padding:2px 8px; border-radius:3px; font-weight:600; }
+    .source { color:var(--muted); font-size:13px; margin-bottom:0; }
+    .body { padding:4px 28px 26px; }
+    .body>.notice { margin-top:22px; }
+    .facts { margin:0; display:grid; grid-template-columns:150px minmax(0,1fr); border-top:1px solid var(--line); font-size:14px; }
+    .facts dt,.facts dd { padding:10px 0; border-bottom:1px solid var(--line); margin:0; }
+    .facts dt { color:var(--muted); }
+    code { font:13px/1.5 Consolas,monospace; overflow-wrap:anywhere; }
+    .rule-grid { display:grid; grid-template-columns:1.2fr 1fr 1fr; gap:16px; margin:16px 0 12px; }
+    .fixed { border:1px solid var(--line); background:var(--ground); padding:8px 10px; min-height:42px; border-radius:3px; font-size:14px; }
+    .rule-summary { padding:15px 18px; background:var(--tint); color:#12496e; border-radius:3px; font-size:16px; font-weight:600; margin:16px 0 8px; overflow-wrap:anywhere; }
+    .steps { margin:0; padding-left:24px; }
+    .steps li { padding:0 0 15px 7px; max-width:75ch; }
+    .steps li::marker { color:var(--blue); font-weight:650; }
+    .review { margin-top:14px; padding:16px 0 0; border-top:1px solid var(--line); display:flex; gap:10px; align-items:start; font-size:14px; font-weight:400; }
+    input[type=checkbox] { accent-color:var(--blue); width:18px; height:18px; margin:3px 0 0; flex-shrink:0; }
+    .prereqs { margin-top:26px; border-top:1px solid var(--line); padding-top:20px; }
+    .prereqs summary { cursor:pointer; font-size:16px; font-weight:650; }
+    .prereqs ol { padding-left:22px; margin-bottom:0; }
+    .prereqs li { padding:5px 0; }
+    footer { border-top:1px solid var(--line); margin-top:32px; padding:22px 0 12px; display:flex; gap:20px; justify-content:space-between; flex-wrap:wrap; font-size:12px; color:var(--muted); }
+    footer .sources { display:flex; gap:18px; flex-wrap:wrap; }
+    #print-report { display:none; }
+    [hidden] { display:none !important; }
+    @media(max-width:1050px) {
+      .scope-grid { grid-template-columns:repeat(2,minmax(0,1fr)); }
+      .intro { align-items:start; flex-direction:column; gap:16px; }
+      .workspace { grid-template-columns:230px minmax(0,1fr); gap:18px; }
+      .topbar,.page { padding:20px 24px; }
+      .article-head { padding:22px; }
+      .body { padding:4px 22px 24px; }
+      .rule-grid { grid-template-columns:repeat(2,minmax(0,1fr)); }
+    }
+    @media(max-width:720px) {
+      .topbar,.page { padding:16px; }
+      .topbar { gap:8px; align-items:start; flex-direction:column; }
+      .workspace { grid-template-columns:minmax(0,1fr); }
+      .navlist { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:4px; }
+      .group { grid-column:1/-1; margin-top:12px; }
+      .navbutton { padding:10px 8px; font-size:13px; }
+      .navfoot { margin:12px 10px 2px; }
+      .scope { padding:18px; }
+      .article-head { padding:20px 18px; }
+      .body { padding:0 18px 20px; }
+      .facts { grid-template-columns:110px minmax(0,1fr); }
+      .rule-grid,.scope-grid { grid-template-columns:minmax(0,1fr); gap:12px; }
+      .intro { margin-top:6px; }
+      h2 { font-size:21px; }
+    }
+    @media print {
+      @page { margin:18mm; }
+      body { background:white; font-size:10pt; color:#000; }
+      header,.page,.skip { display:none; }
+      #print-report { display:block; }
+      #print-report h1 { font-size:23pt; }
+      #print-report h2 { font-size:17pt; }
+      #print-report h3 { font-size:12pt; }
+      .print-rule { break-before:page; }
+      .print-rule li { margin-bottom:8pt; }
+      .print-rule p { max-width:none; }
+      a { color:#000; }
+    }
+  </style>
+</head>
+<body>
+  <a class="skip" href="#rule-title">Skip to alert steps</a>
+  <header>
+    <div class="topbar">
+      <div class="identity"><span class="mark" aria-hidden="true"><i></i><i></i><i></i><i></i></span>Dashboard alert guide</div>
+      <span class="topnote">Azure Monitor / Local plan / No Azure connection</span>
+    </div>
+  </header>
+  <main class="page">
+    <div class="intro">
+      <div>
+        <h1>Configure dashboard alerts</h1>
+        <p>Check each source. Set an approved limit. Follow the steps in Azure.</p>
+      </div>
+      <div class="actions">
+        <button class="button" id="print" type="button">Print all steps</button>
+        <button class="button primary" id="download" type="button">Download plan (.txt)</button>
+      </div>
+    </div>
+    <noscript><p class="notice">Enable JavaScript to use this local guide. No settings are sent to Azure.</p></noscript>
+    <details class="notice" open>
+      <summary>Check the source before you create a rule</summary>
+      <ul>
+        <li>The two images contain nine unique panels. The second image repeats six panels.</li>
+        <li>The throttle and timeout legends show Event Hub events, not HTTP requests.</li>
+        <li>The failed-request metric is deprecated. Use the supported Requests metric.</li>
+        <li>All limits below are examples. A zero line, a blank sample, or "--" does not prove service health.</li>
+      </ul>
+    </details>
+    <section class="scope" aria-labelledby="scope-title">
+      <div class="sectionline"><h2 id="scope-title">Set the shared details</h2><span class="hint">Optional in this draft. Required in Azure.</span></div>
+      <div class="scope-grid">
+        <div><label for="apim">API Management resource</label><input id="apim" maxlength="160" placeholder="Enter the exact resource name" autocomplete="off"></div>
+        <div><label for="openai">Azure OpenAI resource</label><input id="openai" maxlength="160" placeholder="Enter the exact resource name" autocomplete="off"></div>
+        <div><label for="resourceGroup">Alert rule resource group</label><input id="resourceGroup" maxlength="160" placeholder="Enter the resource group" autocomplete="off"></div>
+        <div><label for="actionGroup">Action group</label><input id="actionGroup" maxlength="160" placeholder="Enter the action group" autocomplete="off"></div>
+      </div>
+      <div class="statusbar">
+        <span id="save-status" role="status" aria-live="polite">Changes stay in this browser.</span>
+        <button class="linkbutton" id="reset" type="button">Reset saved guide</button>
+      </div>
+      <p class="small" style="margin:8px 0 0">Names are not resource IDs. Check the subscription, resource group, region, and full resource ID in Azure.</p>
+    </section>
+    <div class="workspace">
+      <nav aria-label="Dashboard panels">
+        <div class="navhead">Select a panel <span id="review-count" class="count">0 / 9 reviewed</span></div>
+        <div id="panel-nav" class="navlist"></div>
+        <p class="navfoot">A review mark means that you checked the source. It does not mean that an alert is active.</p>
+      </nav>
+      <article id="rule-detail" aria-labelledby="rule-title">
+        <div class="article-head">
+          <div class="article-meta"><span class="tag" id="scope-tag"></span><span id="panel-position" aria-live="polite"></span><span>Example settings</span></div>
+          <h2 id="rule-title" tabindex="-1"></h2>
+          <p class="source" id="source-title"></p>
+        </div>
+        <div class="body">
+          <div class="notice" id="panel-warning"><p id="warning-text"></p></div>
+          <h3>Check the metric</h3>
+          <dl class="facts">
+            <dt>Source legend</dt><dd id="legend"></dd>
+            <dt>Alert signal</dt><dd><span id="signal"></span><br><code id="metric-id"></code></dd>
+            <dt>Resource type</dt><dd><code id="namespace"></code></dd>
+            <dt>Aggregation</dt><dd id="aggregation"></dd>
+            <dt>Dimensions</dt><dd id="dimensions"></dd>
+          </dl>
+          <h3>Set the rule condition</h3>
+          <p class="small">Use the service target and recent traffic to approve each limit. These examples are not production recommendations.</p>
+          <div class="rule-grid">
+            <div><label for="threshold" id="threshold-label">Threshold</label><input id="threshold" type="number" step="any" min="0" required aria-describedby="rule-error condition-note"></div>
+            <div><label for="window">Lookback period</label><select id="window"><option value="1">1 minute</option><option value="5">5 minutes</option><option value="15">15 minutes</option></select></div>
+            <div><label for="severity">Severity</label><select id="severity"><option value="1">Sev 1 - Error</option><option value="2">Sev 2 - Warning</option><option value="3">Sev 3 - Informational</option></select></div>
+          </div>
+          <p class="small" id="condition-note"></p>
+          <p class="rule-summary" id="condition-summary"></p>
+          <p id="rule-error" class="error" role="alert" hidden></p>
+          <h3>Follow the Azure portal steps</h3>
+          <ol class="steps" id="steps"></ol>
+          <label class="review" for="reviewed"><input id="reviewed" type="checkbox"><span>I checked this source metric and these settings in the live resource.</span></label>
+        </div>
+      </article>
+    </div>
+    <details class="prereqs" open>
+      <summary>Before you enable the rules</summary>
+      <ol>
+        <li>Get read access to each target resource and action group. Get write access to the alert rule resource group.</li>
+        <li>Check the resource tier and supported signals in Metrics. CPU and memory gateway metrics require an API Management v2 tier.</li>
+        <li>Send approved test traffic. Confirm that each selected metric has recent data.</li>
+        <li>Select or create an action group. Get approval for receivers. Test notification delivery.</li>
+        <li>Check alert costs. Each dimension series can create a separate alert and charge.</li>
+        <li>Agree on a separate no-data check. A metric rule does not prove health when samples stop.</li>
+      </ol>
+    </details>
+    <footer>
+      <span>Draft guide. No alert rules are created by this page.</span>
+      <div class="sources">
+        <a href="https://learn.microsoft.com/en-us/azure/azure-monitor/reference/supported-metrics/microsoft-apimanagement-service-metrics" target="_blank" rel="noopener noreferrer">API Management metrics</a>
+        <a href="https://learn.microsoft.com/en-us/azure/azure-monitor/reference/supported-metrics/microsoft-cognitiveservices-accounts-metrics" target="_blank" rel="noopener noreferrer">OpenAI metrics</a>
+        <a href="https://learn.microsoft.com/en-us/azure/azure-monitor/alerts/alerts-create-metric-alert-rule" target="_blank" rel="noopener noreferrer">Create alert rules</a>
+      </div>
+    </footer>
+    <p id="output-status" class="small" role="status" aria-live="polite"></p>
+  </main>
+  <section id="print-report" aria-label="Print report"></section>
+  <script>
+    'use strict';
+    const KEY = 'dashboard-alert-guide-v1';
+    const rules = [
+      {
+        id:'memory', short:'Gateway memory', title:'Gateway Memory Usage %', source:'Gateway Memory Usage %',
+        legend:'Memory Percentage of Gateway (Max)', signal:'Memory Percentage of Gateway', metric:'MemoryPercent_Gateway',
+        scope:'apim', aggregation:'Maximum', dimensions:'No dimensions. Monitor the selected API Management resource.',
+        threshold:'80', unit:'%', window:'5', severity:'2',
+        warning:'This signal requires an API Management v2 tier. The image shows a low memory level. Do not use the chart maximum as an alert limit.',
+        note:'The rule checks the maximum sample in the lookback period. It does not require the limit to be exceeded for the full period.',
+        response:'Check memory use and traffic. Check policies and recent changes before you change capacity.'
+      },
+      {
+        id:'cpu', short:'Gateway CPU', title:'Gateway CPU Usage %', source:'Gateway CPU Usage %',
+        legend:'CPU Percentage of Gateway (Max)', signal:'CPU Percentage of Gateway', metric:'CpuPercent_Gateway',
+        scope:'apim', aggregation:'Maximum', dimensions:'No dimensions. Monitor the selected API Management resource.',
+        threshold:'80', unit:'%', window:'5', severity:'2',
+        warning:'This signal requires an API Management v2 tier. A short CPU peak is not the same as sustained load.',
+        note:'Maximum detects a peak. Use Average instead only if the approved rule must detect sustained load. This guide keeps Maximum to match the panel.',
+        response:'Check gateway load, policy cost, and recent changes. Check capacity before you scale the service.'
+      },
+      {
+        id:'failed', short:'Failed gateway requests', title:'Failed Gateway Response', source:'Failed Gateway Response',
+        legend:'Failed Gateway Requests (Deprecated) (Sum)', signal:'Requests', metric:'Requests',
+        scope:'apim', aggregation:'Total (Sum)', dimensions:'Filter GatewayResponseCodeCategory to 5xx. Confirm the value in Metrics. Split by ApiId for a separate alert per API.',
+        threshold:'5', unit:'requests', window:'5', severity:'1',
+        warning:'Do not create a new rule with FailedRequests. This example replaces it with Requests filtered to 5xx. This is a server-error rule, not an exact copy of the deprecated failure definition.',
+        note:'The example counts server errors. If client errors must also trigger an alert, define a separate approved rule.',
+        response:'Check gateway and backend errors. Use diagnostic logs to find the affected API and the error reason.'
+      },
+      {
+        id:'throttled', short:'Throttled Event Hub events', title:'Throttled Request for Gateway', source:'Throttled Request for Gateway',
+        legend:'Throttled EventHub Events (Sum)', signal:'Throttled EventHub Events', metric:'EventHubThrottledEvents',
+        scope:'apim', aggregation:'Total (Sum)', dimensions:'Split by Location if separate regional alerts are required.',
+        threshold:'0', unit:'events', window:'5', severity:'2',
+        warning:'The title and legend do not match. The legend measures Event Hub logging events. It does not count HTTP 429 responses. This rule follows the legend.',
+        note:'For HTTP throttling, create a different Requests rule. Filter GatewayResponseCode to 429. Use BackendResponseCode for backend-only throttling. Confirm the required signal first.',
+        response:'Check Event Hub capacity and API Management logging settings. Check for lost diagnostic events.'
+      },
+      {
+        id:'timeout', short:'Timed out Event Hub events', title:'Gateway Timeout Response', source:'Gateway Timeout Response',
+        legend:'Timed Out EventHub Events (Sum)', signal:'Timed Out EventHub Events', metric:'EventHubTimedoutEvents',
+        scope:'apim', aggregation:'Total (Sum)', dimensions:'Split by Location if separate regional alerts are required.',
+        threshold:'0', unit:'events', window:'5', severity:'2',
+        warning:'The title and legend do not match. The legend measures Event Hub logging timeouts. It does not count HTTP gateway timeouts. This rule follows the legend.',
+        note:'For HTTP 504 responses, create a different Requests rule with GatewayResponseCode set to 504. Other timeout failures can use different codes. Check LastErrorReason and logs before you define that rule.',
+        response:'Check Event Hub connectivity, capacity, and logging settings. Do not treat this count as a backend HTTP timeout count.'
+      },
+      {
+        id:'backend', short:'Backend response time', title:'Gateway Backend Request Response Time Average', source:'Gateway Backend Request Response Time Average',
+        legend:'Two API series are shown in milliseconds. Confirm each ApiId in the live panel.',
+        signal:'Duration of Backend Requests', metric:'BackendDuration',
+        scope:'apim', aggregation:'Average', dimensions:'Split by ApiId. Select each required API value. Do not combine both API series into one average.',
+        threshold:'2000', unit:'ms', window:'5', severity:'2',
+        warning:'Confirm BackendDuration in the live panel. Duration includes the full gateway request and measures a different interval. The image alone does not identify the metric ID.',
+        note:'Use separate series for each API. An average can hide a slow request. Add a separate tail-latency rule if the service target requires one.',
+        response:'Check the affected backend API. Compare backend time with gateway time and check dependencies.'
+      },
+      {
+        id:'latency', short:'Model response time', title:'Maximum model response time', source:'Max Time to Response ... by ModelDeploymentName (title is cut off in the image)',
+        legend:'Time to Response (Max)', signal:'Time to Response', metric:'AzureOpenAITimeToResponse',
+        scope:'openai', aggregation:'Maximum', dimensions:'Split by ModelDeploymentName. Select each deployment, or include all current and future values if approved.',
+        threshold:'5000', unit:'ms', window:'5', severity:'2',
+        warning:'Confirm AzureOpenAITimeToResponse in the live panel. This metric measures time to the first response at the service gateway. It is not full response completion time or client end-to-end time.',
+        note:'The example detects a peak per deployment. Model behavior differs. Use separate rules if deployments need different limits.',
+        response:'Check the affected deployment, prompt size, traffic, and service latency. Compare client logs before you identify the cause.'
+      },
+      {
+        id:'tokens', short:'Tokens per minute', title:'Total Token Consumption Per Minute Per Model', source:'Total Token Consumption Per Minute Per Model',
+        legend:'Two model deployment series are shown. The metric name is not visible.',
+        signal:'Processed Inference Tokens', metric:'TokenTransaction',
+        scope:'openai', aggregation:'Total (Sum)', dimensions:'Split by ModelDeploymentName. Set a separate rule for each deployment that has a different approved token budget.',
+        threshold:'80000', unit:'tokens/min', window:'1', severity:'2',
+        warning:'Confirm TokenTransaction in the live panel. It counts prompt plus generated tokens. The example limit is an arbitrary budget. It is not the deployment quota or a reliable forecast of throttling.',
+        note:'Keep the lookback period at one minute to measure tokens per minute. Check every minute. Late samples can delay or miss a short peak. A five-minute sum is not tokens per minute.',
+        response:'Check token use for the affected deployment. Compare the approved budget, traffic, and quota. Check HTTP 429 responses separately.'
+      },
+      {
+        id:'availability', short:'Model availability', title:'Model Availability Status', source:'Model Availability Status',
+        legend:'ModelDeploymentName / Max / 100% (three visible deployments)',
+        signal:'Azure OpenAI AvailabilityRate', metric:'AzureOpenAIAvailabilityRate',
+        scope:'openai', aggregation:'Minimum', dimensions:'Split by ModelDeploymentName. Select each deployment, or include all current and future values if approved.',
+        threshold:'99', unit:'%', window:'5', severity:'1', less:true,
+        warning:'Confirm AzureOpenAIAvailabilityRate in the live panel. Do not use the generic SuccessRate metric for Azure OpenAI. Maximum at 100% can hide a lower sample. This example uses Minimum.',
+        note:'The rate is (calls minus server errors) / calls. Minimum detects the lowest sample in the period. It is not a request-weighted SLO. No traffic does not prove availability.',
+        response:'Check service errors for the affected deployment. Check Azure Service Health. Use an approved synthetic check for idle deployments.'
+      }
+    ];
+    const sharedKeys = ['apim','openai','resourceGroup','actionGroup'];
+    const $ = id => document.getElementById(id);
+    const node = (tag, text, className) => {
+      const el = document.createElement(tag);
+      if (text !== undefined) el.textContent = text;
+      if (className) el.className = className;
+      return el;
+    };
+    function defaults() {
+      return { version:1, shared:Object.fromEntries(sharedKeys.map(k => [k,''])),
+        rules:Object.fromEntries(rules.map(r => [r.id,{threshold:r.threshold,window:r.window,severity:r.severity,reviewed:false}])) };
+    }
+    let state = defaults();
+    let active = rules[0];
+    let storageBlocked = false;
+    function ruleError(r, cfg) {
+      const value = Number(cfg.threshold);
+      if (!cfg.threshold.trim() || !Number.isFinite(value) || value < 0) return 'Enter a finite threshold of zero or more.';
+      if (r.unit === '%' && value > 100) return 'Enter a percentage from 0 through 100.';
+      if (r.unit === 'tokens/min' && value <= 0) return 'Enter a token budget greater than zero.';
+      if (r.unit === 'tokens/min' && cfg.window !== '1') return 'Use a one-minute lookback period for tokens per minute.';
+      if (!['1','5','15'].includes(cfg.window)) return 'Select a supported lookback period.';
+      if (!['1','2','3'].includes(cfg.severity)) return 'Select a supported severity.';
+      return '';
+    }
+    function validSaved(value) {
+      return value && value.version === 1 && value.shared && value.rules &&
+        sharedKeys.every(k => typeof value.shared[k] === 'string' && value.shared[k].length <= 160) &&
+        rules.every(r => {
+          const c = value.rules[r.id];
+          return c && typeof c.threshold === 'string' && c.threshold.length <= 100 &&
+            typeof c.window === 'string' && typeof c.severity === 'string' && typeof c.reviewed === 'boolean' &&
+            ['1','5','15'].includes(c.window) && ['1','2','3'].includes(c.severity) &&
+            (r.id !== 'tokens' || c.window === '1');
+        });
+    }
+    function storageMessage(text, error = false) {
+      $('save-status').textContent = text;
+      $('save-status').classList.toggle('error', error);
+    }
+    try {
+      const saved = localStorage.getItem(KEY);
+      if (saved !== null) {
+        const parsed = JSON.parse(saved);
+        if (!validSaved(parsed)) throw new Error('Unsupported saved guide format.');
+        state = parsed;
+        storageMessage('Saved settings loaded from this browser.');
+      }
+    } catch (error) {
+      storageBlocked = true;
+      storageMessage('Saved data cannot be read. Changes are not saved. Download the plan, or use Reset saved guide to recover.', true);
+      console.error('Alert guide storage read failed:', error);
+    }
+    function save() {
+      if (storageBlocked) return;
+      try {
+        localStorage.setItem(KEY, JSON.stringify(state));
+        storageMessage('Changes saved in this browser. No data sent to Azure.');
+      } catch (error) {
+        storageBlocked = true;
+        storageMessage('Changes cannot be saved in this browser. Download the plan to keep a copy. Use Reset saved guide to retry.', true);
+        console.error('Alert guide storage write failed:', error);
+      }
+    }
+    function condition(r) {
+      const c = state.rules[r.id];
+      return `${r.aggregation} ${r.less ? '<' : '>'} ${c.threshold} ${r.unit} over ${c.window} minute${c.window === '1' ? '' : 's'}. Check every 1 minute.`;
+    }
+    function stepsFor(r) {
+      const c = state.rules[r.id];
+      const resource = state.shared[r.scope].trim() || (r.scope === 'apim' ? '[API_MANAGEMENT_RESOURCE]' : '[AZURE_OPENAI_RESOURCE]');
+      const group = state.shared.resourceGroup.trim() || '[ALERT_RULE_RESOURCE_GROUP]';
+      const action = state.shared.actionGroup.trim() || '[ACTION_GROUP]';
+      return [
+        `Open ${resource} in the Azure portal. Check the full resource ID, subscription, resource group, and region. Open Metrics. Confirm ${r.signal} (${r.metric}) and recent samples.`,
+        'Select Alerts > Create > Alert rule. On Scope, select this resource. Do not use the dashboard as the resource scope.',
+        `On Condition, select the metric signal ${r.signal} (${r.metric}). Set Aggregation type to ${r.aggregation}.`,
+        `Set the dimensions. ${r.dimensions}${r.dimensions.startsWith('No dimensions.') ? '' : ' Preview each selected series. A split creates a separate alert per series. Check the added cost.'}`,
+        `Set Threshold to Static. Set Operator to ${r.less ? 'Less than' : 'Greater than'}. Set Threshold value to ${c.threshold} ${r.unit}. Set Lookback period to ${c.window} minute${c.window === '1' ? '' : 's'}. Set Check every to 1 minute.`,
+        `On Actions, select ${action}. Check the receivers and test the action group. This test checks notification delivery. It does not test the metric condition.`,
+        `On Details, select ${group}. Use a name such as alert-${r.id}-[resource]-[series]. Set Severity to Sev ${c.severity}. Add an owner and response instructions. Enable automatic resolution for this metric rule.`,
+        'Select Review + create. Check the scope, condition, dimensions, cost, and action group. Get approval before you create and enable the rule.',
+        `Use approved test traffic or a separate test rule to trigger the condition. Check Fired, notification delivery, and Resolved after recovery. Restore any temporary test limit. Response: ${r.response}`
+      ];
+    }
+    function updateNav() {
+      $('review-count').textContent = `${rules.filter(r => state.rules[r.id].reviewed).length} / 9 reviewed`;
+      for (const r of rules) {
+        const button = $('nav-' + r.id);
+        button.setAttribute('aria-current', String(r.id === active.id));
+        button.querySelector('.navdone').textContent = state.rules[r.id].reviewed ? 'Checked' : '';
+      }
+    }
+    function refreshCondition() {
+      const error = ruleError(active,state.rules[active.id]);
+      $('threshold').setAttribute('aria-invalid', String(Boolean(error)));
+      $('rule-error').hidden = !error;
+      $('rule-error').textContent = error;
+      $('condition-summary').textContent = error ? 'Correct the condition to generate the steps.' : condition(active);
+      $('steps').replaceChildren(...(error ? [] : stepsFor(active).map(t => node('li',t))));
+      const invalid = rules.filter(r => ruleError(r,state.rules[r.id]));
+      $('download').disabled = invalid.length > 0;
+      $('print').disabled = invalid.length > 0;
+      $('output-status').textContent = invalid.length ? `Correct the settings for: ${invalid.map(r => r.short).join(', ')}. Then download or print the plan.` : '';
+    }
+    function render() {
+      const r = active, c = state.rules[r.id];
+      $('scope-tag').textContent = r.scope === 'apim' ? 'API Management' : 'Azure OpenAI';
+      $('panel-position').textContent = `Panel ${rules.indexOf(r)+1} of 9`;
+      $('rule-title').textContent = r.title;
+      $('source-title').textContent = `Dashboard title: ${r.source}`;
+      $('legend').textContent = r.legend;
+      $('signal').textContent = r.signal;
+      $('metric-id').textContent = r.metric;
+      $('namespace').textContent = r.scope === 'apim' ? 'Microsoft.ApiManagement/service' : 'Microsoft.CognitiveServices/accounts';
+      $('aggregation').textContent = r.aggregation;
+      $('dimensions').textContent = r.dimensions;
+      $('warning-text').textContent = r.warning;
+      $('condition-note').textContent = r.note;
+      $('threshold-label').textContent = `Threshold (${r.unit})`;
+      $('threshold').max = r.unit === '%' ? '100' : '';
+      $('threshold').value = c.threshold;
+      $('window').value = c.window;
+      $('window').disabled = r.id === 'tokens';
+      $('severity').value = c.severity;
+      $('reviewed').checked = c.reviewed;
+      updateNav();
+      refreshCondition();
+    }
+    for (let i=0; i<rules.length; i++) {
+      const r = rules[i];
+      if (i===0 || i===6) $('panel-nav').append(node('div',i===0 ? 'Gateway panels' : 'Model panels','group'));
+      const button = node('button',undefined,'navbutton');
+      button.id = 'nav-' + r.id;
+      button.type = 'button';
+      button.setAttribute('aria-controls','rule-detail');
+      button.append(node('span',String(i+1),'navnumber'),node('span',r.short,'navtext'),node('span','','navdone'));
+      button.addEventListener('click',() => { active=r; render(); });
+      $('panel-nav').append(button);
+    }
+    for (const k of sharedKeys) {
+      $(k).value = state.shared[k];
+      $(k).addEventListener('input',() => {
+        state.shared[k] = $(k).value;
+        for (const r of rules) {
+          if (r.scope === k || k === 'resourceGroup' || k === 'actionGroup') state.rules[r.id].reviewed = false;
+        }
+        $('reviewed').checked = state.rules[active.id].reviewed;
+        save();
+        updateNav();
+        refreshCondition();
+      });
+    }
+    for (const key of ['threshold','window','severity']) {
+      $(key).addEventListener('input',() => {
+        state.rules[active.id][key] = $(key).value;
+        state.rules[active.id].reviewed = false;
+        $('reviewed').checked = false;
+        save();
+        updateNav();
+        refreshCondition();
+      });
+    }
+    $('reviewed').addEventListener('change',() => {
+      if (ruleError(active,state.rules[active.id])) {
+        $('reviewed').checked = false;
+        $('rule-error').textContent = 'Correct the condition before you mark the source as checked.';
+        return;
+      }
+      state.rules[active.id].reviewed = $('reviewed').checked;
+      save();
+      updateNav();
+    });
+    const reportIntro = [
+      'DASHBOARD ALERT PLAN - DRAFT',
+      'No rules were created by this page. All limits need approval.',
+      'Blank shared fields appear as placeholders. Replace them before use.',
+      'Check the full resource IDs and live signal definitions in Azure.',
+      'A review mark means source checked, not deployed.',
+      'Get read access to the target resources and action groups, and write access to the alert rule resource group.',
+      'Check alert costs and per-series charges. Test notifications and the actual rule condition separately.',
+      'Agree on a separate no-data check. No traffic or missing samples do not prove health.'
+    ];
+    function reportLines(r) {
+      const c = state.rules[r.id];
+      const error = ruleError(r,c);
+      return [
+        `${rules.indexOf(r)+1}. ${r.title}`, `Dashboard title: ${r.source}`,
+        `Source legend: ${r.legend}`, `Signal: ${r.signal} (${r.metric})`,
+        `Resource type: ${r.scope === 'apim' ? 'Microsoft.ApiManagement/service' : 'Microsoft.CognitiveServices/accounts'}`,
+        `SOURCE CHECK: ${r.warning}`, `NOTE: ${r.note}`,
+        `Review: ${c.reviewed ? 'Source and settings checked' : 'Not checked'}; NOT a deployment record.`,
+        error ? `INVALID CONDITION: ${error}` : condition(r),
+        ...(error ? [] : stepsFor(r).map((text,index) => `${index+1}. ${text}`))
+      ];
+    }
+    function textReport() {
+      return [...reportIntro,'',...rules.flatMap(r => [...reportLines(r),'']),
+        'SOURCES',...Array.from(document.querySelectorAll('footer a'),a => a.href)].join('\n\n');
+    }
+    function buildPrint() {
+      const report = $('print-report');
+      report.replaceChildren(node('h1','Dashboard alert plan'));
+      for (const text of reportIntro.slice(1)) report.append(node('p',text));
+      for (const r of rules) {
+        const section = node('section',undefined,'print-rule');
+        section.append(node('h2',`${rules.indexOf(r)+1}. ${r.title}`));
+        for (const text of reportLines(r).slice(1)) section.append(node('p',text));
+        report.append(section);
+      }
+      report.append(node('h2','Sources'));
+      for (const link of document.querySelectorAll('footer a')) report.append(node('p',link.href));
+    }
+    $('download').addEventListener('click',() => {
+      if (rules.some(r => ruleError(r,state.rules[r.id]))) { refreshCondition(); return; }
+      const url = URL.createObjectURL(new Blob([textReport()],{type:'text/plain;charset=utf-8'}));
+      const link = node('a');
+      link.href = url;
+      link.download = 'dashboard-alert-plan.txt';
+      document.body.append(link);
+      link.click();
+      link.remove();
+      setTimeout(() => URL.revokeObjectURL(url),1000);
+      $('output-status').textContent = 'The plan download was requested. Check your browser downloads.';
+    });
+    $('print').addEventListener('click',() => {
+      if (rules.some(r => ruleError(r,state.rules[r.id]))) { refreshCondition(); return; }
+      buildPrint();
+      window.print();
+    });
+    window.addEventListener('beforeprint',buildPrint);
+    $('reset').addEventListener('click',() => {
+      if (!window.confirm('Reset this guide? This removes its saved details, limits, and review marks. It does not change Azure alerts or other browser data.')) return;
+      try {
+        localStorage.removeItem(KEY);
+        storageBlocked = false;
+        state = defaults();
+        for (const k of sharedKeys) $(k).value = '';
+        render();
+        storageMessage('Guide reset. Example values restored.');
+      } catch (error) {
+        storageMessage('Saved data could not be removed. Check browser storage permissions. No reset was made.',true);
+        console.error('Alert guide storage reset failed:',error);
+      }
+    });
+    render();
+  </script>
+</body>
+</html>
